@@ -113,7 +113,7 @@ def draw_network(population_list):
     for i in range(len(population_list)):
         # if person i's positive_flag is True, add them to the positive_case list; also add their node to the
         # graph in red
-        if (population_list[i][1] == True):
+        if population_list[i][1]:
             positive_case_list.append(i)
             network.add_node(i, node_color='r')
         # else, if person i's positive_flag is False, add them to the negative_case list; also add their node to the
@@ -147,6 +147,7 @@ def draw_network(population_list):
 
 
 def new_positive_case(population_list, person_number):
+    # set person to positive
     population_list[person_number][1] = True
 
     return None
@@ -155,6 +156,7 @@ def new_positive_case(population_list, person_number):
 def transmit(population_list, person_number, p_transmission):
     person = population_list[person_number]
     if person[1]:
+        # for everyone in proximity of positive person, chance to transmit to them if they're negative
         for person_nearby in person[2]:
             if not population_list[person_nearby][1] and np.random.rand() < p_transmission:
                 population_list[person_nearby][1] = True
@@ -163,6 +165,7 @@ def transmit(population_list, person_number, p_transmission):
 
 
 def recover(population_list, person_number):
+    # set person to negative
     population_list[person_number][1] = False
 
     return None
@@ -170,12 +173,17 @@ def recover(population_list, person_number):
 
 def simulate_step(population_list, p_transmission, p_recovery):
     if np.random.rand() < p_transmission:
+        # randomly generate integer corresponding to person in population
         unlucky_fellow = np.random.randint(0, len(population_list))
+        # make that person positive
         new_positive_case(population_list, unlucky_fellow)
 
     for person_number, person in enumerate(population_list):
+        # if a person is positive, chance to transmit to others
         if person[1]:
             transmit(population_list, person_number, p_transmission)
+
+        # if person is positive, chance for them to recover
         if person[1] and np.random.rand() < p_recovery:
             recover(population_list, person_number)
 
@@ -185,13 +193,16 @@ def simulate_step(population_list, p_transmission, p_recovery):
 def all_cases_positive(population_list):
     for person in population_list:
         if not person[1]:
+            # if any single person tests negative, returns false
             return False
+    # otherwise, return true
     return True
 
 
 def simulate_run(population_list, p_transmission, p_recovery, first_positive_person):
     new_positive_case(population_list, first_positive_person)
     draw_network(population_list)
+
     while not all_cases_positive(population_list):
         simulate_step(population_list, p_transmission, p_recovery)
         draw_network(population_list)
@@ -201,6 +212,7 @@ def simulate_run(population_list, p_transmission, p_recovery, first_positive_per
 
 def simulate_run_no_draw(population_list, p_transmission, p_recovery, first_positive_person):
     new_positive_case(population_list, first_positive_person)
+
     count = 0
     while not all_cases_positive(population_list):
         simulate_step(population_list, p_transmission, p_recovery)
@@ -211,6 +223,7 @@ def simulate_run_no_draw(population_list, p_transmission, p_recovery, first_posi
 
 def simulate_many(population_size, p_transmission, p_recovery, first_positive_person, num_runs):
     num_steps_list = list()
+
     for run in range(num_runs):
         population_list = create_population_list(population_size)
         simulation = simulate_run_no_draw(population_list, p_transmission, p_recovery, first_positive_person)
@@ -220,6 +233,7 @@ def simulate_many(population_size, p_transmission, p_recovery, first_positive_pe
     return average
 
 
+# CODE FOR SUBMISSION
 simulate_run(create_population_list(15), 0.8, 0.1, 0)
 average_steps = simulate_many(15, 0.8, 0.1, 0, 10000)
 print("Avg. steps for complete transmission: ", average_steps)
